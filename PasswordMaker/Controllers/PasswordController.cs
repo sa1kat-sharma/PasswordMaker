@@ -11,9 +11,7 @@ namespace PasswordMaker.Controllers
         public ActionResult<string> GeneratePassword([FromBody] PasswordOptions options)
         {
             if (options == null)
-            {
-                return BadRequest("Invalid input");
-            }
+                return BadRequest("Invalid input");            
 
             string password = GenerateRandomPassword(options);
             return Ok(password);
