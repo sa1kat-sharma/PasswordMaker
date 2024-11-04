@@ -1,9 +1,9 @@
-name: SonarCloud
+name: SonarCloud Test
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 
