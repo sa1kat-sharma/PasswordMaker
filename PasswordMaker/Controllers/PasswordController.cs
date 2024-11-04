@@ -16,7 +16,7 @@ namespace PasswordMaker.Controllers
             string password = GenerateRandomPassword(options);
             return Ok(password);
         }
-        private string GenerateRandomPassword(PasswordOptions options)
+        private static string GenerateRandomPassword(PasswordOptions options)
         {
             string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$";
             var random = new Random();
