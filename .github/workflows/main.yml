@@ -1,28 +1,58 @@
-name: Publish
+name: SonarCloud
 
 on:
-  workflow_dispatch:
   push:
     branches:
-    - master
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  publish:
+  build:
+    name: Build and Analyze
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis relevance
 
+      # Step 2: Setup .NET SDK
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '6.0' # Replace with your .NET version
 
-      - name: Restore 
-        run: dotnet restore ./PasswordMaker.sln 
+      # Step 3: Cache SonarCloud packages
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-      - name: Build
-        run: dotnet build ./PasswordMaker.sln --configuration Release --no-restore
+      # Step 4: Cache SonarCloud scanner
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.dotnet/tools/.sonar
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
 
-      - name: Publish
-        run: dotnet publish ./PasswordMaker.sln --configuration Release --no-build
+      # Step 5: Install SonarCloud scanner if not cached
+      - name: Install SonarCloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+
+      # Step 6: Build and analyze
+      - name: Build and Analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Ensure your SONAR_TOKEN secret is set in GitHub
+        run: |
+          dotnet sonarscanner begin /k:"sa1kat-sharma_PasswordMaker" /o:"sa1kat-sharma" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet build --configuration Release
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
